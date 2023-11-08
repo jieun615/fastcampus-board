@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 const secretText = 'superSecret';
-
+const refreshSecretText = 'supersuperSecret';
 const posts = [
     {
         username: 'John',
@@ -14,14 +14,33 @@ const posts = [
         title: 'Post 2'
     }
 ]
+let refreshTokens = [];
 
-app.use(express.json());
+app.use(express.json())
+
+app.get('/', (req, res) => {
+    res.send('hi');
+})
 
 app.post('/login', (req, res) => {
     const username = req.body.username;
     const user = { name: username };
 
-    const accessToken = jwt.sign(user, secretText);
+    const accessToken = jwt.sign(user, 
+        secretText, 
+        { expiresIn: '30s' });
+
+    const refreshToken = jwt.sign(user,
+        refreshSecretText,
+        { expiresIn: '1d' })
+    
+    refreshTokens.push(refreshToken);
+
+    res.cookie('jwt', refreshToken, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000
+    })
+
     res.json({ accessToken: accessToken });
 })
 
